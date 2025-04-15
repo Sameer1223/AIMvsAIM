@@ -1,6 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class FirstPersonView : MonoBehaviour
+public class FirstPersonView : NetworkBehaviour
 {
     
     public Transform cameraTransform;
@@ -15,6 +16,11 @@ public class FirstPersonView : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (!IsOwner) cameraTransform.gameObject.SetActive(false);
     }
 
     // Update is called once per frame
