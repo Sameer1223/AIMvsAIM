@@ -2,60 +2,32 @@ using System;
 using UnityEngine;
 using Unity.Netcode;
 
-public class TrackingWeapon : MonoBehaviour
+public class TrackingWeapon : Weapon
 {
-    public LayerMask layerMask;
+    public LayerMask enemyPlayerLayer;
+    private Transform _cameraTransform;
+    public float fireRate = 0.2f;
+
+    private float _lastFireTime;
     
-    [Header("Weapon Variables")] 
-    public float damagePerSecond = 15f;
-    public float range = 100f;
-
-    private bool isFiring;
-    private Camera playerCamera;
-    private float damageTickTime = 0.0625f;
-    private float lastTickTime = 0f;
-
-    private void Start()
+    private void Awake()
     {
-        playerCamera = GetComponentInChildren<Camera>();
+        _cameraTransform = GetComponentInChildren<Camera>().transform;
     }
-    //
-    // private void Update()
-    // {
-    //     if (!IsOwner) return;
-    //     
-    //     if (isFiring && Time.time - lastTickTime >= damageTickTime)
-    //     {
-    //         lastTickTime = Time.time;
-    //         Vector3 origin = playerCamera.transform.position + playerCamera.transform.forward * 0.5f;
-    //         Vector3 direction = playerCamera.transform.forward;
-    //         FireRayServerRpc(origin, direction);
-    //     }
-    // }
-    //
-    // public override void HandleInput()
-    // {
-    //     isFiring = true;
-    // }
-    //
-    // public override void StopFiring()
-    // {
-    //     isFiring = false;
-    // }
-    //
-    // [ServerRpc(RequireOwnership = false)]
-    // private void FireRayServerRpc(Vector3 origin, Vector3 direction)
-    // {
-    //     if (Physics.Raycast(origin, direction, out RaycastHit hit, range, layerMask))
-    //     {
-    //         Debug.DrawRay(origin, direction * range, Color.red, 0.1f);
-    //         var targetNetworkObject = hit.collider.gameObject.GetComponentInParent<NetworkObject>();
-    //         if (targetNetworkObject != null && targetNetworkObject.OwnerClientId != OwnerClientId)
-    //         {
-    //             var health = hit.collider.GetComponentInParent<Health>();
-    //             Debug.Log(health + "hit");
-    //              if (health != null) health.TakeDamageServerRpc(damagePerSecond * damageTickTime);
-    //         }
-    //     }
-    // }
+    
+    public override void Fire()
+    {
+        if (Time.time < _lastFireTime + fireRate) return;
+        
+        _lastFireTime = Time.time;
+        
+        if (!Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out RaycastHit hit, Mathf.Infinity,
+                enemyPlayerLayer))
+            return;
+        
+        if (hit.transform.parent.TryGetComponent(out Health health))
+        {
+            health.TakeDamageServerRpc(damage);
+        }
+    }
 }

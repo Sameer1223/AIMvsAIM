@@ -6,6 +6,7 @@ using Unity.Services.Core;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Networking
@@ -50,7 +51,7 @@ namespace Networking
             statusText.text = "Starting Host...";
             try
             {
-                Allocation allocation = await RelayService.Instance.CreateAllocationAsync(7);
+                Allocation allocation = await RelayService.Instance.CreateAllocationAsync(1);
                 string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
                 Debug.Log("Join Code: " + joinCode);
                 joinCodeInputField.text = joinCode;
@@ -65,8 +66,9 @@ namespace Networking
 
                 NetworkManager.Singleton.StartHost();
                 statusText.text = "Host started! Share this code: " + joinCode;
+                NetworkManager.Singleton.SceneManager.LoadScene("Lobby Scene", LoadSceneMode.Single);
                 
-                DisableAllButtons();
+                //DisableAllButtons();
             }
             catch (RelayServiceException e)
             {
@@ -101,8 +103,9 @@ namespace Networking
 
                 NetworkManager.Singleton.StartClient();
                 statusText.text = "Client started, connecting to host...";
+                NetworkManager.Singleton.SceneManager.LoadScene("Lobby Scene", LoadSceneMode.Single);
                 
-                DisableAllButtons();
+                //DisableAllButtons();
             }
             catch (RelayServiceException e)
             {
@@ -111,11 +114,11 @@ namespace Networking
             }
         }
 
-        private void DisableAllButtons()
-        {
-            startHostButton.gameObject.SetActive(false);
-            startClientButton.gameObject.SetActive(false);
-            joinCodeInputField.gameObject.SetActive(false);
-        }
+        // private void DisableAllButtons()
+        // {
+        //     startHostButton.gameObject.SetActive(false);
+        //     startClientButton.gameObject.SetActive(false);
+        //     joinCodeInputField.gameObject.SetActive(false);
+        // }
     }
 }

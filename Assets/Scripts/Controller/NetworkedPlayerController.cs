@@ -13,7 +13,9 @@ public class NetworkedPlayerController : NetworkBehaviour
     private CharacterController controller;
 
     [SerializeField] private int playerLayer = 3;
-    public ClickingWeapon currentWeapon;
+    private Weapon currentWeapon;
+    public string selectedWeapon = "Clicking";
+    //public ClickingWeapon currentWeapon;
 
     private void Awake()
     {
@@ -22,7 +24,12 @@ public class NetworkedPlayerController : NetworkBehaviour
 
     private void Start()
     {
-        currentWeapon = GetComponent<ClickingWeapon>();
+        currentWeapon = selectedWeapon switch
+        {
+            "Clicking" => GetComponent<ClickingWeapon>(),
+            "Tracking" => GetComponent<TrackingWeapon>(),
+            _ => currentWeapon
+        };
     }
 
     public override void OnNetworkSpawn()
@@ -82,9 +89,12 @@ public class NetworkedPlayerController : NetworkBehaviour
 
     private void HandleFiring()
     {
-        if (Input.GetButtonDown("Fire1"))
+        switch (selectedWeapon)
         {
-            currentWeapon.Fire();
+            case "Clicking" when Input.GetButtonDown("Fire1"):
+            case "Tracking" when Input.GetButton("Fire1"):
+                currentWeapon.Fire();
+                break;
         }
     }
 

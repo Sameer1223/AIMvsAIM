@@ -1,14 +1,14 @@
 using TMPro;
 using UnityEngine;
 using Unity.Netcode;
-using Unity.Networking.Transport;
-using UnityEngine.SocialPlatforms;
+using UnityEngine.UI;
 
 public class Health : NetworkBehaviour
 {
     [SerializeField] private int maxHealth = 250;
     private int _currentHealth;
     public TMP_Text healthText;
+    public Image healthBarFill;
 
     private void Awake()
     {
@@ -43,6 +43,7 @@ public class Health : NetworkBehaviour
     private void UpdateHealthClientRpc(int newHealth)
     {
         healthText.text = newHealth.ToString();
+        healthBarFill.fillAmount = (float) newHealth / maxHealth;
     }
 
     private void HandleDeath()

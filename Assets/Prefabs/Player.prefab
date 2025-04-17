@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 125, y: 20}
+  m_SizeDelta: {x: 125, y: 15}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &315458174946972013
 CanvasRenderer:
@@ -373,7 +373,7 @@ MonoBehaviour:
   gravity: -9.81
   smoothTime: 0.1
   playerLayer: 3
-  currentWeapon: {fileID: 0}
+  selectedWeapon: Clicking
 --- !u!114 &846647507674718584
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -442,15 +442,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  damage: 0
+  damage: 1
   enemyPlayerLayer:
     serializedVersion: 2
-    m_Bits: 0
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 8
-  damagePerSecond: 15
-  range: 100
+    m_Bits: 128
+  fireRate: 0.05
 --- !u!114 &7419889210624546607
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -483,6 +479,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 250
   healthText: {fileID: 1768922269490987409}
+  healthBarFill: {fileID: 2961937129749628564}
 --- !u!1 &5317504684629198954
 GameObject:
   m_ObjectHideFlags: 0
@@ -952,7 +949,7 @@ MonoBehaviour:
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 0
-  m_FillAmount: 0.6
+  m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
