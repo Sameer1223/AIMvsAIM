@@ -372,8 +372,10 @@ MonoBehaviour:
   jumpForce: 3
   gravity: -9.81
   smoothTime: 0.1
+  head: {fileID: 2218677203301254946}
+  body: {fileID: 5318872558123977323}
   playerLayer: 3
-  selectedWeapon: Clicking
+  lobbySettingsSO: {fileID: 11400000, guid: fd5544ab33e28c74fac186849a07507e, type: 2}
 --- !u!114 &846647507674718584
 MonoBehaviour:
   m_ObjectHideFlags: 0

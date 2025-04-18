@@ -18,6 +18,7 @@ namespace Networking
         public Button startClientButton;
         public TMP_InputField joinCodeInputField;
         public TMP_Text statusText;
+        public static string lobbyCode;
 
         private async void Start()
         {
@@ -65,10 +66,9 @@ namespace Networking
                 );
 
                 NetworkManager.Singleton.StartHost();
-                statusText.text = "Host started! Share this code: " + joinCode;
+                //statusText.text = "Host started! Share this code: " + joinCode;
+                lobbyCode = joinCode;
                 NetworkManager.Singleton.SceneManager.LoadScene("Lobby Scene", LoadSceneMode.Single);
-                
-                //DisableAllButtons();
             }
             catch (RelayServiceException e)
             {
@@ -87,7 +87,7 @@ namespace Networking
                 return;
             }
         
-            statusText.text = "Joining Host...";
+            //statusText.text = "Joining Host...";
             try
             {
                 JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
@@ -102,10 +102,8 @@ namespace Networking
                 );
 
                 NetworkManager.Singleton.StartClient();
-                statusText.text = "Client started, connecting to host...";
+                //statusText.text = "Client started, connecting to host...";
                 NetworkManager.Singleton.SceneManager.LoadScene("Lobby Scene", LoadSceneMode.Single);
-                
-                //DisableAllButtons();
             }
             catch (RelayServiceException e)
             {
@@ -113,12 +111,5 @@ namespace Networking
                 statusText.text = "Error joining host: " + e.Message;
             }
         }
-
-        // private void DisableAllButtons()
-        // {
-        //     startHostButton.gameObject.SetActive(false);
-        //     startClientButton.gameObject.SetActive(false);
-        //     joinCodeInputField.gameObject.SetActive(false);
-        // }
     }
 }

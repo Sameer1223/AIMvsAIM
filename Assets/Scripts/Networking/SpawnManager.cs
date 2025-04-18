@@ -1,5 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
 public class SpawnManager : MonoBehaviour
 {
     private static SpawnManager Instance { get; set; }
@@ -16,28 +18,31 @@ public class SpawnManager : MonoBehaviour
             Instance = this;
         }
         
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+        if (NetworkManager.Singleton.IsHost)
+            NetworkManager.Singleton.SceneManager.OnLoadComplete += OnSceneLoaded;
+
+        //if (!NetworkManager.Singleton.IsHost) enabled = false;
     }
     
     private void OnDestroy()
     {
         if (NetworkManager.Singleton == null) return;
-        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+        NetworkManager.Singleton.SceneManager.OnLoadComplete -= OnSceneLoaded;
     }
     
-    private void OnClientConnected(ulong clientId)
+    private void OnSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
     {
-        if (NetworkManager.Singleton.IsServer)
-        {
-            Vector3 spawnPos = new Vector3(
-                Random.Range(xBounds.x, xBounds.y),
-                yValue,
-                Random.Range(zBounds.x, zBounds.y)
-            );
+        if (!NetworkManager.Singleton.IsHost || sceneName != "Arena") return;
+        Debug.Log("Spawning player");
 
-            GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-            player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
-        }
+        Vector3 spawnPos = new Vector3(
+            Random.Range(xBounds.x, xBounds.y),
+            yValue,
+            Random.Range(zBounds.x, zBounds.y)
+        );
+        
+        GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
+        player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
     }
     
 }

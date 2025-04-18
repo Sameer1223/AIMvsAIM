@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Networking;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -12,92 +13,132 @@ public class LobbyManager : NetworkBehaviour
     public TMP_Dropdown sizeDropdown;
     public TMP_Dropdown speedDropdown;
     public TMP_Dropdown weaponDropdown;
+    public Toggle reloadToggle;
     public TMP_Text playerCountText;
     public TMP_Text readyCountText;
+    public TMP_Text lobbyCodeText;
     public Button readyButton;
     public Button startGameButton;
 
     [Header("Settings")] 
     public LobbySettingsSO lobbySettings;
 
-    private NetworkVariable<int> playerCount = new NetworkVariable<int>(0);
-    private NetworkVariable<int> readyCount = new NetworkVariable<int>(0);
-    private Dictionary<ulong, bool> readyStatus = new Dictionary<ulong, bool>();
-
-    private void Start()
+    private NetworkVariable<int> playerCount = new(0);
+    private NetworkVariable<int> readyCount = new(0);
+    private Dictionary<ulong, bool> readyStatus = new();
+    
+    private NetworkVariable<int> selectedSize = new();
+    private NetworkVariable<int> selectedSpeed = new();
+    private NetworkVariable<int> selectedWeapon = new();
+    
+    public override void OnNetworkSpawn()
     {
-        readyButton.onClick.AddListener(OnReadyClicked);
-        startGameButton.onClick.AddListener(OnStartGameClicked);
+        SetLobbyCodeText(RelayManager.lobbyCode);
+        
+        sizeDropdown.SetValueWithoutNotify(selectedSize.Value);
+        speedDropdown.SetValueWithoutNotify(selectedSpeed.Value);
+        weaponDropdown.SetValueWithoutNotify(selectedWeapon.Value);
+        
+        selectedSize.OnValueChanged += (_, newVal) => sizeDropdown.SetValueWithoutNotify(newVal);
+        selectedSpeed.OnValueChanged += (_, newVal) => speedDropdown.SetValueWithoutNotify(newVal);
+        selectedWeapon.OnValueChanged += (_, newVal) => weaponDropdown.SetValueWithoutNotify(newVal);
+        
+        playerCount.OnValueChanged += (_, _) => UpdateCountText();
+        readyCount.OnValueChanged += (_, _) => UpdateCountText();
 
-        if (!IsHost)
+        if (IsHost)
+        {
+            sizeDropdown.onValueChanged.AddListener(index => selectedSize.Value = index);
+            speedDropdown.onValueChanged.AddListener(index => selectedSpeed.Value = index);
+            weaponDropdown.onValueChanged.AddListener(index =>
+            {
+                selectedWeapon.Value = index;
+                reloadToggle.interactable = selectedWeapon.Value != 1;
+            });
+            
+            playerCount.Value++;
+            readyStatus[NetworkManager.Singleton.LocalClientId] = false;
+        }
+        else
         {
             startGameButton.interactable = false;
             sizeDropdown.interactable = false;
             speedDropdown.interactable = false;
             weaponDropdown.interactable = false;
+            reloadToggle.interactable = false;
+            
+            IncrementPlayerCountServerRpc(NetworkManager.Singleton.LocalClientId);
         }
-
-        //UpdateUI();
+        
+        readyButton.onClick.AddListener(OnReadyClicked);
+        startGameButton.onClick.AddListener(OnStartGameClickedClientRpc);
+        UpdateCountText();
     }
-
-    public override void OnNetworkSpawn()
-    {
-        playerCount.Value++;
-        readyStatus[NetworkManager.Singleton.LocalClientId] = false;
-        UpdateCountsClientRpc(playerCount.Value, readyCount.Value);
-    }
-
+    
     private void OnDestroy()
     {
         if (IsSpawned)
         {
             playerCount.Value--;
             readyStatus.Remove(NetworkManager.Singleton.LocalClientId);
-            UpdateCountsClientRpc(playerCount.Value, readyCount.Value);
         }
     }
 
     private void OnReadyClicked()
     {
-        readyStatus[NetworkManager.Singleton.LocalClientId] = true;
-        RequestReadyServerRpc(NetworkManager.Singleton.LocalClientId);
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
+        
+        if (!readyStatus.ContainsKey(clientId))
+            readyStatus[clientId] = false;
+        
+        readyStatus[clientId] = !readyStatus[clientId];
+        bool isReady = readyStatus[clientId];
+        
+        readyButton.GetComponentInChildren<TMP_Text>().text = isReady? "Unready" : "Ready";
+        RequestReadyServerRpc(clientId, isReady);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RequestReadyServerRpc(ulong clientId)
+    private void RequestReadyServerRpc(ulong clientId, bool isReady)
     {
-        readyStatus[clientId] = true;
+        readyStatus[clientId] = isReady;
         readyCount.Value = CountReadyPlayers();
-        UpdateCountsClientRpc(playerCount.Value, readyCount.Value);
+        startGameButton.interactable = readyCount.Value == 2;
     }
-
-    [ClientRpc]
-    private void UpdateCountsClientRpc(int players, int readyPlayers)
+    
+    [ServerRpc(RequireOwnership = false)]
+    private void IncrementPlayerCountServerRpc(ulong clientId)
     {
-        playerCountText.text = $"Players: {players} / 2";
-        readyCountText.text = $"Ready: {readyPlayers} / {players}";
+        playerCount.Value++;
+        readyStatus[clientId] = false;
     }
-
+    
+    private void SetLobbyCodeText(string lobbyCode)
+    {
+        var code = lobbyCode ?? "------"; 
+        lobbyCodeText.text = $"Lobby Code: {code}";
+    }
+    
+    private void UpdateCountText()
+    {
+        playerCountText.text = $"Players: {playerCount.Value} / 2";
+        readyCountText.text = $"Ready: {readyCount.Value} / {playerCount.Value}";
+    }
+    
     private int CountReadyPlayers()
     {
         return readyStatus.Count(status => status.Value);
     }
 
-    private void OnStartGameClicked()
+    [ClientRpc]
+    private void OnStartGameClickedClientRpc()
     {
-        if (readyCount.Value == playerCount.Value)
-        {
-            lobbySettings.selectedSize = (LobbySettingsSO.Size) sizeDropdown.value;
-            lobbySettings.selectedSpeed = (LobbySettingsSO.Speed) speedDropdown.value;
-            lobbySettings.selectedWeapon = (LobbySettingsSO.AimWeapon) weaponDropdown.value;
-
-            NetworkManager.Singleton.SceneManager.LoadScene("Arena", LoadSceneMode.Single);
-        }
+        if (readyCount.Value != playerCount.Value) return;
+        
+        lobbySettings.selectedSize = (LobbySettingsSO.Size) sizeDropdown.value;
+        lobbySettings.selectedSpeed = (LobbySettingsSO.Speed) speedDropdown.value;
+        lobbySettings.selectedWeapon = (LobbySettingsSO.AimWeapon) weaponDropdown.value;
+            
+        NetworkManager.Singleton.SceneManager.LoadScene("Arena", LoadSceneMode.Single);
     }
-
-    // private void UpdateUI()
-    // {
-    //     playerCountText.text = "Players Connected: " + playerCount.Value;
-    //     readyCountText.text = "Players Ready: " + readyCount.Value;
-    // }
 }

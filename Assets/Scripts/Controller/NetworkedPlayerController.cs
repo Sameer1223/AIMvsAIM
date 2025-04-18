@@ -1,21 +1,31 @@
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
 public class NetworkedPlayerController : NetworkBehaviour
 {
+    [Header("Movement Variables")]
     public float moveSpeed = 5f;
     public float jumpForce = 5f;
     public float gravity = -9.81f;
     public float smoothTime = 0.1f;
-
+    
+    [Header("Movement Checks")]
     private Vector3 velocity = Vector3.zero;
     private bool isGrounded;
+    
+    [Header("Game Object Components")]
+    [SerializeField] private GameObject head;
+    [SerializeField] private GameObject body;
     private CharacterController controller;
 
+    [Header("Weapon Variables")]
     [SerializeField] private int playerLayer = 3;
     private Weapon currentWeapon;
-    public string selectedWeapon = "Clicking";
-    //public ClickingWeapon currentWeapon;
+    private string selectedWeapon;
+    
+    [Header("Game Settings")]
+    public LobbySettingsSO lobbySettingsSO;
 
     private void Awake()
     {
@@ -24,12 +34,56 @@ public class NetworkedPlayerController : NetworkBehaviour
 
     private void Start()
     {
-        currentWeapon = selectedWeapon switch
+        SetGameSettings();
+    }
+
+    private void SetGameSettings()
+    {
+        Vector3 bodySize;
+        Vector3 headSize;
+        
+        switch (lobbySettingsSO.selectedSize)
         {
-            "Clicking" => GetComponent<ClickingWeapon>(),
-            "Tracking" => GetComponent<TrackingWeapon>(),
-            _ => currentWeapon
+            case LobbySettingsSO.Size.Large:
+                bodySize = new Vector3(0.7f, 0.7f, 0.7f);
+                headSize = new Vector3(0.3f, 0.3f, 0.3f);
+                break;
+            case LobbySettingsSO.Size.Medium:
+                bodySize = new Vector3(0.5f, 0.7f, 0.5f);
+                headSize = new Vector3(0.25f, 0.25f, 0.25f);
+                break;
+            case LobbySettingsSO.Size.Small:
+                bodySize = new Vector3(0.3f, 0.7f, 0.3f);
+                headSize = new Vector3(0.15f, 0.15f, 0.15f);
+                
+                var pos = head.transform.localPosition;
+                pos.y = 1.43f;
+                head.transform.localPosition = pos;
+                break;
+            default:
+                bodySize = new Vector3(0.7f, 0.7f, 0.7f);
+                headSize = new Vector3(0.3f, 0.3f, 0.3f);
+                break;
+        }
+        
+        body.transform.localScale = bodySize;
+        head.transform.localScale = headSize;
+
+        moveSpeed = lobbySettingsSO.selectedSpeed switch
+        {
+            LobbySettingsSO.Speed.Slow => 4f,
+            LobbySettingsSO.Speed.Fast => 8f,
+            _ => 6f
         };
+        
+        currentWeapon = lobbySettingsSO.selectedWeapon switch
+        {
+            LobbySettingsSO.AimWeapon.Clicking => GetComponent<ClickingWeapon>(),
+            LobbySettingsSO.AimWeapon.Tracking => GetComponent<TrackingWeapon>(),
+            _ => GetComponent<ClickingWeapon>()
+        };
+        
+        selectedWeapon = lobbySettingsSO.selectedWeapon.ToString();
     }
 
     public override void OnNetworkSpawn()
@@ -62,28 +116,21 @@ public class NetworkedPlayerController : NetworkBehaviour
 
     private void HandleMovement()
     {
-        // Ground detection
         isGrounded = controller.isGrounded;
-
-        // Get input for movement
+        
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-
-        // Calculate movement direction relative to the player's rotation
+        
         Vector3 moveDirection = (transform.right * horizontal + transform.forward * vertical).normalized;
 
         if (isGrounded && velocity.y < 0)
         {
-            velocity.y = -2f; // Keep player grounded
+            velocity.y = -2f;
         }
 
-        // Apply movement
+        // TODO: Why is there double movement?
         controller.Move(moveDirection * moveSpeed * Time.deltaTime);
-
-        // Apply gravity
         velocity.y += gravity * Time.deltaTime;
-
-        // Move the player using the CharacterController
         controller.Move(velocity * Time.deltaTime);
     }
 
@@ -101,9 +148,8 @@ public class NetworkedPlayerController : NetworkBehaviour
     private void HandleJump()
     {
         if (!isGrounded || !Input.GetButtonDown("Jump")) return;
-        velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);  // Calculate jump force
-
-        // Send jump action to the network
+        velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
+        
         JumpClientRpc();
     }
 
@@ -112,14 +158,13 @@ public class NetworkedPlayerController : NetworkBehaviour
     {
         if (!IsOwner)
         {
-            velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);  // Simulate jump on remote clients
+            velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
         }
     }
 
     [ServerRpc]
     private void UpdatePositionServerRpc(Vector3 newPosition)
     {
-        // Update position for all clients
         UpdatePositionClientRpc(newPosition);
     }
 
@@ -128,7 +173,6 @@ public class NetworkedPlayerController : NetworkBehaviour
     {
         if (!IsOwner)
         {
-            // Lerp to smooth the transition of remote player position
             transform.position = Vector3.Lerp(transform.position, newPosition, smoothTime);
         }
     }
