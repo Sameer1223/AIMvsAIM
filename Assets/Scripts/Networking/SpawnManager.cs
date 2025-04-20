@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 public class SpawnManager : MonoBehaviour
 {
-    private static SpawnManager Instance { get; set; }
+    public static SpawnManager Instance { get; set; }
     public GameObject playerPrefab;
     
     public Vector2 xBounds = new(-15f, 15f);
@@ -20,8 +20,6 @@ public class SpawnManager : MonoBehaviour
         
         if (NetworkManager.Singleton.IsHost)
             NetworkManager.Singleton.SceneManager.OnLoadComplete += OnSceneLoaded;
-
-        //if (!NetworkManager.Singleton.IsHost) enabled = false;
     }
     
     private void OnDestroy()
@@ -33,8 +31,12 @@ public class SpawnManager : MonoBehaviour
     private void OnSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
     {
         if (!NetworkManager.Singleton.IsHost || sceneName != "Arena") return;
-        Debug.Log("Spawning player");
+        
+        SpawnPlayer(clientId);
+    }
 
+    private void SpawnPlayer(ulong clientId)
+    {
         Vector3 spawnPos = new Vector3(
             Random.Range(xBounds.x, xBounds.y),
             yValue,
@@ -43,6 +45,15 @@ public class SpawnManager : MonoBehaviour
         
         GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
         player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
+    }
+    
+    public Vector3 GetNewSpawnPosition()
+    {
+        return new Vector3(
+            Random.Range(xBounds.x, xBounds.y),
+            yValue,
+            Random.Range(zBounds.x, zBounds.y)
+        );
     }
     
 }

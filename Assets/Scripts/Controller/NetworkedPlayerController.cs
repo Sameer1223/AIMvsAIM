@@ -106,32 +106,34 @@ public class NetworkedPlayerController : NetworkBehaviour
         HandleFiring();
     }
 
-    private void FixedUpdate()
-    {
-        if (!IsOwner) return;
-
-        // Send position update to the network
-        UpdatePositionServerRpc(transform.position);
-    }
+    // private void FixedUpdate()
+    // {
+    //     if (!IsOwner) return;
+    //
+    //     // Send position update to the network
+    //     UpdatePositionServerRpc(transform.position);
+    // }
 
     private void HandleMovement()
     {
         isGrounded = controller.isGrounded;
-        
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        
+
+        float horizontal = Input.GetAxisRaw("Horizontal");
+        float vertical = Input.GetAxisRaw("Vertical");
+
         Vector3 moveDirection = (transform.right * horizontal + transform.forward * vertical).normalized;
+
+        Vector3 move = moveDirection * moveSpeed;
 
         if (isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
         }
 
-        // TODO: Why is there double movement?
-        controller.Move(moveDirection * moveSpeed * Time.deltaTime);
         velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+        move.y = velocity.y;
+
+        controller.Move(move * Time.deltaTime);
     }
 
     private void HandleFiring()
@@ -161,19 +163,35 @@ public class NetworkedPlayerController : NetworkBehaviour
             velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
         }
     }
+    
+    // [ServerRpc(RequireOwnership = false)]
+    // private void UpdatePositionServerRpc(Vector3 newPosition)
+    // {
+    //     UpdatePositionClientRpc(newPosition);
+    // }
+    //
+    // [ClientRpc]
+    // private void UpdatePositionClientRpc(Vector3 newPosition)
+    // {
+    //     if (!IsOwner)
+    //     {
+    //         transform.position = Vector3.Lerp(transform.position, newPosition, smoothTime);
+    //     }
+    // }
 
-    [ServerRpc]
-    private void UpdatePositionServerRpc(Vector3 newPosition)
+    [ServerRpc(RequireOwnership = false)]
+    public void TeleportServerRpc(Vector3 newPosition)
     {
-        UpdatePositionClientRpc(newPosition);
+        TeleportClientRpc(newPosition);
     }
-
+    
     [ClientRpc]
-    private void UpdatePositionClientRpc(Vector3 newPosition)
+    public void TeleportClientRpc(Vector3 newPosition)
     {
-        if (!IsOwner)
-        {
-            transform.position = Vector3.Lerp(transform.position, newPosition, smoothTime);
-        }
+        controller.enabled = false;
+        transform.position = newPosition;
+        controller.enabled = true;
+        
+        velocity = Vector3.zero;
     }
 }

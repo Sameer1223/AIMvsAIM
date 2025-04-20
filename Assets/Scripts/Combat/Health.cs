@@ -33,7 +33,7 @@ public class Health : NetworkBehaviour
         if (_currentHealth <= 0)
         {
             _currentHealth = 0;
-            HandleDeath();
+            HandleDeathServerRpc();
         }
         
         UpdateHealthClientRpc(_currentHealth);
@@ -45,9 +45,32 @@ public class Health : NetworkBehaviour
         healthText.text = newHealth.ToString();
         healthBarFill.fillAmount = (float) newHealth / maxHealth;
     }
-
-    private void HandleDeath()
+    
+    [ClientRpc]
+    private void ResetHealthClientRpc()
     {
-        Debug.Log("Player is dead");
+        _currentHealth = maxHealth;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void HandleDeathServerRpc()
+    {
+        ulong deadClientId = OwnerClientId;
+        ulong winnerClientId = GetOpponentClientId(deadClientId);
+
+        GameLoop.Instance.EndRound(winnerClientId);
+        
+        //gameObject.SetActive(false);
+        ResetHealthClientRpc();
+    }
+    
+    private ulong GetOpponentClientId(ulong deadClientId)
+    {
+        foreach (var client in NetworkManager.Singleton.ConnectedClients)
+        {
+            if (client.Key != deadClientId)
+                return client.Key;
+        }
+        return 0;
     }
 }
