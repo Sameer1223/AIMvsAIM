@@ -63,6 +63,14 @@ public class GameLoop : NetworkBehaviour
     
     private void EndGame()
     {
+        foreach (var player in FindObjectsOfType<NetworkedPlayerController>())
+        {
+            if (player.NetworkObject.IsSpawned)
+            {
+                player.NetworkObject.Despawn(true);
+            }
+        }
+        
         NetworkManager.Singleton.SceneManager.LoadScene("Lobby Scene", LoadSceneMode.Single);
     }
 

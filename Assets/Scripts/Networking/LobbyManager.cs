@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Networking;
+using NUnit.Framework;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -19,6 +21,7 @@ public class LobbyManager : NetworkBehaviour
     public TMP_Text lobbyCodeText;
     public Button readyButton;
     public Button startGameButton;
+    public Button backButton;
 
     [Header("Settings")] 
     public LobbySettingsSO lobbySettings;
@@ -30,6 +33,12 @@ public class LobbyManager : NetworkBehaviour
     private NetworkVariable<int> selectedSize = new();
     private NetworkVariable<int> selectedSpeed = new();
     private NetworkVariable<int> selectedWeapon = new();
+
+    private void Start()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
     
     public override void OnNetworkSpawn()
     {
@@ -72,6 +81,8 @@ public class LobbyManager : NetworkBehaviour
         
         readyButton.onClick.AddListener(OnReadyClicked);
         startGameButton.onClick.AddListener(OnStartGameClickedClientRpc);
+        backButton.onClick.AddListener(OnBackClicked);
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
         UpdateCountText();
     }
     
@@ -80,6 +91,7 @@ public class LobbyManager : NetworkBehaviour
         if (IsSpawned)
         {
             playerCount.Value--;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
             readyStatus.Remove(NetworkManager.Singleton.LocalClientId);
         }
     }
@@ -96,6 +108,26 @@ public class LobbyManager : NetworkBehaviour
         
         readyButton.GetComponentInChildren<TMP_Text>().text = isReady? "Unready" : "Ready";
         RequestReadyServerRpc(clientId, isReady);
+    }
+
+    private void OnBackClicked()
+    {
+        if (IsHost && NetworkManager.Singleton.ConnectedClientsList.Count > 1)
+        {
+            HandleServerDisconnectClientRpc();
+        }
+        else
+        {
+            ShutdownAndReturnToMenu();
+        }
+    }
+    
+    private void ShutdownAndReturnToMenu()
+    {
+        NetworkManager.Singleton.Shutdown();
+        Destroy(NetworkManager.Singleton.gameObject);
+
+        SceneManager.LoadScene("Main Menu");
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -140,5 +172,31 @@ public class LobbyManager : NetworkBehaviour
         lobbySettings.selectedWeapon = (LobbySettingsSO.AimWeapon) weaponDropdown.value;
             
         NetworkManager.Singleton.SceneManager.LoadScene("Arena", LoadSceneMode.Single);
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        if (IsHost)
+        {
+            HandleClientDisconnectServerRpc(clientId);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void HandleClientDisconnectServerRpc(ulong clientId)
+    {
+        if (readyStatus.TryGetValue(clientId, out bool wasReady) && wasReady)
+        {
+            readyCount.Value = Mathf.Max(readyCount.Value - 1, 0);
+        }
+
+        readyStatus.Remove(clientId);
+        playerCount.Value = Mathf.Max(playerCount.Value - 1, 0);
+    }
+
+    [ClientRpc]
+    private void HandleServerDisconnectClientRpc()
+    {
+        ShutdownAndReturnToMenu();
     }
 }
