@@ -8,6 +8,7 @@ public class FirstPersonView : NetworkBehaviour
     public float mouseSensitivity = 100f;
     public float minPitch = -90f;
     public float maxPitch = 90f;
+    public const float valorantSensMultiplier = 3.18f;
     
     private float pitch = 0f;
     
@@ -16,6 +17,9 @@ public class FirstPersonView : NetworkBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        Camera.main.fieldOfView = PlayerPrefs.GetFloat("FOV", 103f);
+        
+        mouseSensitivity = PlayerPrefs.GetFloat("MouseSensitivity", 1f) * valorantSensMultiplier;
     }
 
     public override void OnNetworkSpawn()
@@ -27,8 +31,8 @@ public class FirstPersonView : NetworkBehaviour
     void Update()
     {
         if (!IsOwner) return;
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
         
         pitch -= mouseY;
         pitch = Mathf.Clamp(pitch, minPitch, maxPitch);

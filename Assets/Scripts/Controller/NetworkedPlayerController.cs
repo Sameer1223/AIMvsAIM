@@ -78,8 +78,8 @@ public class NetworkedPlayerController : NetworkBehaviour
         
         jumpForce = lobbySettingsSO.selectedJumpForce switch
         {
-            LobbySettingsSO.JumpForce.Low => 0.5f,
-            LobbySettingsSO.JumpForce.High => 2.5f,
+            LobbySettingsSO.JumpForce.Low => 0.75f,
+            LobbySettingsSO.JumpForce.High => 2.25f,
             _ => 1.5f
         };
         
