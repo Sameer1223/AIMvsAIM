@@ -1,27 +1,40 @@
 using UnityEngine;
 using Unity.Netcode;
 
-public class FloatingHealthbar : NetworkBehaviour
+public class FloatingHealthbar : MonoBehaviour
 {
-    
-    private Camera camera;
+    private Camera localPlayerCamera;
 
-    public override void OnNetworkSpawn()
+    void Start()
     {
-        if (!IsOwner)
+        var networkObject = GetComponentInParent<NetworkObject>();
+        if (networkObject != null && networkObject.IsOwner)
         {
-            GetComponentInChildren<FloatingHealthbar>().enabled = false;
+            enabled = false;
             return;
         }
-        
-        camera = GetComponentInChildren<Camera>();
+        StartCoroutine(FindCameraWhenReady());
     }
-    
-    void Update()
+
+    private System.Collections.IEnumerator FindCameraWhenReady()
     {
-        Vector3 directionToCamera = camera.transform.position - transform.position;
-        directionToCamera.y = 0;
+        while (localPlayerCamera == null)
+        {
+            var playerCamera = Camera.main;
+            if (playerCamera != null)
+            {
+                localPlayerCamera = playerCamera;
+                break;
+            }
+            yield return null; // wait a frame
+        }
+    }
+
+    void LateUpdate()
+    {
+        if (localPlayerCamera == null) return;
         
-        transform.rotation = Quaternion.LookRotation(directionToCamera);
+        transform.LookAt(transform.position + localPlayerCamera.transform.rotation * Vector3.forward,
+            localPlayerCamera.transform.rotation * Vector3.up);
     }
 }

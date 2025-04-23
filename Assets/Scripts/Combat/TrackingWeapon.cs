@@ -5,6 +5,7 @@ using Unity.Netcode;
 public class TrackingWeapon : Weapon
 {
     public LayerMask enemyPlayerLayer;
+    public LayerMask hittableLayer;
     private Transform _cameraTransform;
     public float fireRate = 0.2f;
 
@@ -22,9 +23,10 @@ public class TrackingWeapon : Weapon
         _lastFireTime = Time.time;
         
         if (!Physics.Raycast(_cameraTransform.position, _cameraTransform.forward, out RaycastHit hit, Mathf.Infinity,
-                enemyPlayerLayer))
+                hittableLayer))
             return;
         
+        if (((1 << hit.collider.gameObject.layer) & enemyPlayerLayer) == 0) return;
         if (hit.transform.parent.TryGetComponent(out Health health))
         {
             health.TakeDamageServerRpc(damage);

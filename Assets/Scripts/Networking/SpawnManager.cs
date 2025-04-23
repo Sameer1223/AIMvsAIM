@@ -7,8 +7,8 @@ public class SpawnManager : MonoBehaviour
     public static SpawnManager Instance { get; set; }
     public GameObject playerPrefab;
     
-    public Vector2 xBounds = new(-15f, 15f);
-    public Vector2 zBounds = new(-15f, 15f);
+    public Vector2 xBounds = new(-3f, 3f);
+    public Vector2 zBounds = new(11f, 16f);
     public float yValue = 0f;
     
     private void Awake() {
@@ -31,29 +31,27 @@ public class SpawnManager : MonoBehaviour
     private void OnSceneLoaded(ulong clientId, string sceneName, LoadSceneMode mode)
     {
         if (!NetworkManager.Singleton.IsHost || sceneName != "Arena") return;
-        
         SpawnPlayer(clientId);
     }
 
     private void SpawnPlayer(ulong clientId)
     {
-        Vector3 spawnPos = new Vector3(
-            Random.Range(xBounds.x, xBounds.y),
-            yValue,
-            Random.Range(zBounds.x, zBounds.y)
-        );
-        
-        GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
+        Vector3 spawnPos = GetNewSpawnPosition(clientId);
+
+        GameObject player = Instantiate(playerPrefab, spawnPos, clientId == 0 ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f));
         player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
+        player.GetComponent<NetworkedPlayerController>().TeleportServerRpc(spawnPos);
     }
     
-    public Vector3 GetNewSpawnPosition()
+    public Vector3 GetNewSpawnPosition(ulong clientId)
     {
-        return new Vector3(
+        Vector3 spawnPosition = new Vector3(
             Random.Range(xBounds.x, xBounds.y),
             yValue,
-            Random.Range(zBounds.x, zBounds.y)
+            clientId == 0 ? Random.Range(zBounds.x, zBounds.y) : Random.Range(-zBounds.y, -zBounds.x)
         );
+        
+        return spawnPosition;
     }
     
 }

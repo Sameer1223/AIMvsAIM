@@ -76,6 +76,13 @@ public class NetworkedPlayerController : NetworkBehaviour
             _ => 6f
         };
         
+        jumpForce = lobbySettingsSO.selectedJumpForce switch
+        {
+            LobbySettingsSO.JumpForce.Low => 0.5f,
+            LobbySettingsSO.JumpForce.High => 2.5f,
+            _ => 1.5f
+        };
+        
         currentWeapon = lobbySettingsSO.selectedWeapon switch
         {
             LobbySettingsSO.AimWeapon.Clicking => GetComponent<ClickingWeapon>(),
@@ -100,9 +107,11 @@ public class NetworkedPlayerController : NetworkBehaviour
     private void Update()
     {
         if (!IsOwner) return;
-        
+
         HandleMovement();
+
         HandleJump();
+
         HandleFiring();
     }
 
@@ -124,7 +133,7 @@ public class NetworkedPlayerController : NetworkBehaviour
         Vector3 moveDirection = (transform.right * horizontal + transform.forward * vertical).normalized;
 
         Vector3 move = moveDirection * moveSpeed;
-
+        
         if (isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
@@ -188,6 +197,8 @@ public class NetworkedPlayerController : NetworkBehaviour
     [ClientRpc]
     public void TeleportClientRpc(Vector3 newPosition)
     {
+        if (!IsOwner) return;
+        
         controller.enabled = false;
         transform.position = newPosition;
         controller.enabled = true;

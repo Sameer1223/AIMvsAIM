@@ -15,6 +15,7 @@ public class LobbyManager : NetworkBehaviour
     public TMP_Dropdown sizeDropdown;
     public TMP_Dropdown speedDropdown;
     public TMP_Dropdown weaponDropdown;
+    public TMP_Dropdown jumpForceDropdown;
     public Toggle reloadToggle;
     public TMP_Text playerCountText;
     public TMP_Text readyCountText;
@@ -33,6 +34,7 @@ public class LobbyManager : NetworkBehaviour
     private NetworkVariable<int> selectedSize = new();
     private NetworkVariable<int> selectedSpeed = new();
     private NetworkVariable<int> selectedWeapon = new();
+    private NetworkVariable<int> selectedJumpForce = new();
 
     private void Start()
     {
@@ -47,10 +49,12 @@ public class LobbyManager : NetworkBehaviour
         sizeDropdown.SetValueWithoutNotify(selectedSize.Value);
         speedDropdown.SetValueWithoutNotify(selectedSpeed.Value);
         weaponDropdown.SetValueWithoutNotify(selectedWeapon.Value);
+        jumpForceDropdown.SetValueWithoutNotify(selectedJumpForce.Value);
         
         selectedSize.OnValueChanged += (_, newVal) => sizeDropdown.SetValueWithoutNotify(newVal);
         selectedSpeed.OnValueChanged += (_, newVal) => speedDropdown.SetValueWithoutNotify(newVal);
         selectedWeapon.OnValueChanged += (_, newVal) => weaponDropdown.SetValueWithoutNotify(newVal);
+        selectedJumpForce.OnValueChanged += (_, newVal) => jumpForceDropdown.SetValueWithoutNotify(newVal);
         
         playerCount.OnValueChanged += (_, _) => UpdateCountText();
         readyCount.OnValueChanged += (_, _) => UpdateCountText();
@@ -59,6 +63,7 @@ public class LobbyManager : NetworkBehaviour
         {
             sizeDropdown.onValueChanged.AddListener(index => selectedSize.Value = index);
             speedDropdown.onValueChanged.AddListener(index => selectedSpeed.Value = index);
+            jumpForceDropdown.onValueChanged.AddListener(index => selectedJumpForce.Value = index);
             weaponDropdown.onValueChanged.AddListener(index =>
             {
                 selectedWeapon.Value = index;
@@ -74,6 +79,7 @@ public class LobbyManager : NetworkBehaviour
             sizeDropdown.interactable = false;
             speedDropdown.interactable = false;
             weaponDropdown.interactable = false;
+            jumpForceDropdown.interactable = false;
             reloadToggle.interactable = false;
             
             IncrementPlayerCountServerRpc(NetworkManager.Singleton.LocalClientId);
@@ -170,6 +176,7 @@ public class LobbyManager : NetworkBehaviour
         lobbySettings.selectedSize = (LobbySettingsSO.Size) sizeDropdown.value;
         lobbySettings.selectedSpeed = (LobbySettingsSO.Speed) speedDropdown.value;
         lobbySettings.selectedWeapon = (LobbySettingsSO.AimWeapon) weaponDropdown.value;
+        lobbySettings.selectedJumpForce = (LobbySettingsSO.JumpForce) jumpForceDropdown.value;
             
         NetworkManager.Singleton.SceneManager.LoadScene("Arena", LoadSceneMode.Single);
     }

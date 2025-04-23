@@ -6,6 +6,7 @@ public class LobbySettingsSO : ScriptableObject
     public Size selectedSize;
     public Speed selectedSpeed;
     public AimWeapon selectedWeapon;
+    public JumpForce selectedJumpForce;
 
     public enum Size
     {
@@ -25,5 +26,12 @@ public class LobbySettingsSO : ScriptableObject
     {
         Clicking,
         Tracking
+    }
+
+    public enum JumpForce
+    {
+        Low,
+        Medium,
+        High
     }
 }

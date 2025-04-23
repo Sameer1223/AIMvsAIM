@@ -57,7 +57,7 @@ public class GameLoop : NetworkBehaviour
 
         foreach (var player in FindObjectsOfType<NetworkedPlayerController>())
         {
-            player.TeleportServerRpc(SpawnManager.Instance.GetNewSpawnPosition());
+            player.TeleportServerRpc(SpawnManager.Instance.GetNewSpawnPosition(player.OwnerClientId));
         }
     }
     
