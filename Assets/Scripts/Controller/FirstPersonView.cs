@@ -19,6 +19,11 @@ public class FirstPersonView : NetworkBehaviour
         Cursor.visible = false;
         Camera.main.fieldOfView = PlayerPrefs.GetFloat("FOV", 103f);
         
+        SetMouseSensitivity();
+    }
+
+    public void SetMouseSensitivity()
+    {
         mouseSensitivity = PlayerPrefs.GetFloat("MouseSensitivity", 1f) * valorantSensMultiplier;
     }
 

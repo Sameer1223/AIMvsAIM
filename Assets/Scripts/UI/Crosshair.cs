@@ -1,7 +1,8 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Crosshair : MonoBehaviour
+public class Crosshair : NetworkBehaviour
 {
     public Image crosshairImage;
     public Sprite[] crosshairSprites; // Set these in the inspector
@@ -9,6 +10,25 @@ public class Crosshair : MonoBehaviour
     
     private void Start()
     {
+        ApplyCrosshairSettings();
+    }
+    
+    public override void OnNetworkSpawn()
+    {
+        if (!IsOwner)
+        {
+            if (crosshairImage != null)
+            {
+                crosshairImage.enabled = false;
+            }
+            return;
+        }
+        
+        if (crosshairImage != null)
+        {
+            crosshairImage.enabled = true;
+        }
+        
         ApplyCrosshairSettings();
     }
 
