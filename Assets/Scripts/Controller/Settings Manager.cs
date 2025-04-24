@@ -13,6 +13,7 @@ public class SettingsManager : MonoBehaviour
     public Slider mouseSensitivitySlider;
     public TMP_InputField mouseSensitivityInputField;
     public Toggle muteToggle;
+    public Slider volumeSlider;
     public GameObject settingsPanel;
     public GameObject mainMenuPanel;
 
@@ -44,6 +45,7 @@ public class SettingsManager : MonoBehaviour
         PlayerPrefs.SetFloat("FOV", fovSlider.value);
         PlayerPrefs.SetFloat("MouseSensitivity", mouseSensitivitySlider.value);
         PlayerPrefs.SetInt("MuteAudio", muteToggle.isOn ? 1 : 0);
+        PlayerPrefs.SetFloat("MasterVolume", volumeSlider.value);
         PlayerPrefs.Save();
     }
 
@@ -62,6 +64,7 @@ public class SettingsManager : MonoBehaviour
         mouseSensitivityInputField.text = savedSens.ToString("F2");
 
         muteToggle.isOn = PlayerPrefs.GetInt("MuteAudio", 0) == 1;
+        volumeSlider.value = PlayerPrefs.GetFloat("MasterVolume", 10f);
     }
 
     private void AddInputListeners()

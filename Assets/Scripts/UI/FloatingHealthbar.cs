@@ -4,13 +4,16 @@ using Unity.Netcode;
 public class FloatingHealthbar : MonoBehaviour
 {
     private Camera localPlayerCamera;
+    [SerializeField] private Canvas healthbarCanvas;
 
     void Start()
     {
+        healthbarCanvas = GetComponentInChildren<Canvas>();
         var networkObject = GetComponentInParent<NetworkObject>();
         if (networkObject != null && networkObject.IsOwner)
         {
-            enabled = false;
+            if (healthbarCanvas != null)
+                healthbarCanvas.enabled = false;
             return;
         }
         StartCoroutine(FindCameraWhenReady());

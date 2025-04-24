@@ -1,18 +1,19 @@
 using TMPro;
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class Health : NetworkBehaviour
 {
     [SerializeField] private int maxHealth = 250;
-    private int _currentHealth;
+    [FormerlySerializedAs("_currentHealth")] public int currentHealth;
     public TMP_Text healthText;
     public Image healthBarFill;
 
     private void Awake()
     {
-        _currentHealth = maxHealth;
+        currentHealth = maxHealth;
     }
 
     public override void OnNetworkSpawn()
@@ -27,16 +28,16 @@ public class Health : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void TakeDamageServerRpc(int damage)
     {
-        _currentHealth -= damage;
+        currentHealth -= damage;
         
-        Debug.Log($"New player health: {_currentHealth}");
-        if (_currentHealth <= 0)
+        Debug.Log($"New player health: {currentHealth}");
+        if (currentHealth <= 0)
         {
-            _currentHealth = 0;
+            currentHealth = 0;
             HandleDeathServerRpc();
         }
         
-        UpdateHealthClientRpc(_currentHealth);
+        UpdateHealthClientRpc(currentHealth);
     }
 
     [ClientRpc]
@@ -49,7 +50,7 @@ public class Health : NetworkBehaviour
     [ClientRpc]
     private void ResetHealthClientRpc()
     {
-        _currentHealth = maxHealth;
+        currentHealth = maxHealth;
     }
 
     [ServerRpc(RequireOwnership = false)]

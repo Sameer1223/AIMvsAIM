@@ -29,6 +29,16 @@ public class TrackingWeapon : Weapon
         if (((1 << hit.collider.gameObject.layer) & enemyPlayerLayer) == 0) return;
         if (hit.transform.parent.TryGetComponent(out Health health))
         {
+            
+            if (health.currentHealth - damage <= 0)
+            {
+                AudioManager.Instance.PlayKillSound();
+            }
+            else
+            {
+                AudioManager.Instance.PlayHitSound();
+            }
+            
             health.TakeDamageServerRpc(damage);
         }
     }
