@@ -54,7 +54,6 @@ namespace Networking
             {
                 Allocation allocation = await RelayService.Instance.CreateAllocationAsync(1);
                 string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-                Debug.Log("Join Code: " + joinCode);
                 joinCodeInputField.text = joinCode;
 
                 NetworkManager.Singleton.GetComponent<UnityTransport>().SetHostRelayData(
@@ -73,7 +72,7 @@ namespace Networking
             catch (RelayServiceException e)
             {
                 Debug.LogError(e);
-                statusText.text = "Error starting host: " + e.Message;
+                statusText.text = "Error starting host! Something went wrong!";
             }
         }
 
@@ -108,7 +107,7 @@ namespace Networking
             catch (RelayServiceException e)
             {
                 Debug.LogError(e);
-                statusText.text = "Error joining host: " + e.Message;
+                statusText.text = "Error joining! Make sure the code is correct!" ;
             }
         }
     }

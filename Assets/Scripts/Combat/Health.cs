@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using Unity.Netcode;
@@ -10,6 +11,9 @@ public class Health : NetworkBehaviour
     [FormerlySerializedAs("_currentHealth")] public int currentHealth;
     public TMP_Text healthText;
     public Image healthBarFill;
+    private Coroutine _flashRoutine;
+    private readonly Color32 _flashColor = new Color32(255, 70, 84, 255);
+    private readonly Color32 _healthColor = new Color32(104, 238, 125, 255);
 
     private void Awake()
     {
@@ -40,11 +44,24 @@ public class Health : NetworkBehaviour
         UpdateHealthClientRpc(currentHealth);
     }
 
+    private IEnumerator FlashHealthText()
+    {
+        healthText.color = _flashColor;
+        yield return new WaitForSeconds(0.2f);
+        healthText.color = _healthColor;
+    }
+
     [ClientRpc]
     private void UpdateHealthClientRpc(int newHealth)
     {
         healthText.text = newHealth.ToString();
         healthBarFill.fillAmount = (float) newHealth / maxHealth;
+        
+        // Flash red if health went down
+        if (_flashRoutine != null)
+            StopCoroutine(_flashRoutine);
+
+        _flashRoutine = StartCoroutine(FlashHealthText());
     }
     
     [ServerRpc(RequireOwnership = false)]
