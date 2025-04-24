@@ -47,11 +47,13 @@ public class Health : NetworkBehaviour
         healthBarFill.fillAmount = (float) newHealth / maxHealth;
     }
     
-    [ClientRpc]
-    private void ResetHealthClientRpc()
+    [ServerRpc(RequireOwnership = false)]
+    public void ResetHealthServerRpc()
     {
         currentHealth = maxHealth;
+        UpdateHealthClientRpc(currentHealth);
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     private void HandleDeathServerRpc()
@@ -62,7 +64,7 @@ public class Health : NetworkBehaviour
         GameLoop.Instance.EndRound(winnerClientId);
         
         //gameObject.SetActive(false);
-        ResetHealthClientRpc();
+        //ResetHealthClientRpc();
     }
     
     private ulong GetOpponentClientId(ulong deadClientId)
