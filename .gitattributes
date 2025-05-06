@@ -1,5 +1,13 @@
-# Don't count meta/config/data files
-*.meta linguist-detectable=false
-*.unity linguist-detectable=false
-*.prefab linguist-detectable=false
-*.mat linguist-detectable=false
+# Treat all C# files as source code
+*.cs linguist-language=C#
+
+# Mark non-code files as vendored so they don't affect language stats
+*.shader linguist-vendored
+*.hlsl linguist-vendored
+*.cginc linguist-vendored
+*.mat linguist-vendored
+*.meta linguist-vendored
+*.unity linguist-vendored
+*.prefab linguist-vendored
+*.asset linguist-vendored
+*.controller linguist-vendored
