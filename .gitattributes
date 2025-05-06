@@ -1,5 +1,5 @@
 # Don't count meta/config/data files
-*.meta linguist-vendored
-*.unity linguist-vendored
-*.prefab linguist-vendored
-*.mat linguist-vendored
+*.meta linguist-detectable=false
+*.unity linguist-detectable=false
+*.prefab linguist-detectable=false
+*.mat linguist-detectable=false
