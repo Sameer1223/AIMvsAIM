@@ -1,0 +1,5 @@
+# Don't count meta/config/data files
+*.meta linguist-vendored
+*.unity linguist-vendored
+*.prefab linguist-vendored
+*.mat linguist-vendored
