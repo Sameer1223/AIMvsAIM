@@ -46,11 +46,11 @@ public class GameLoop : NetworkBehaviour
 
         if (localId == 0)
         {
-            p1Text.color= new Color32(151, 229, 66, 255);
+            p1Text.color= new Color32(202, 163, 104, 255);
         }
         else if (localId == 1)
         {
-            p2Text.color= new Color32(151, 229, 66, 255);
+            p2Text.color= new Color32(202, 163, 104, 255);
         }
     }
 
